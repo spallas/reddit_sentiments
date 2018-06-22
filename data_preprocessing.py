@@ -38,7 +38,7 @@ def build_dataset(dataset_file):
     word2id, id2word, embeddings_matrix = load_embeddings()
 
     print("Done.")
-
+    counter = 0
     with open(dataset_file) as f:
         # show fancy progress bar
         for line in tqdm(f, total=_get_num_lines(dataset_file), desc=dataset_file):
@@ -46,14 +46,17 @@ def build_dataset(dataset_file):
             source_id = ids[2:-2].split("', '")[0]
             text = download_text(source_id)
             if text == "error":
+                counter += 1
                 continue
             words_list = list(map(lambda x: word2id.get(x.lower(), 0),
                                   nltk.word_tokenize(text)))
             X.append(words_list)
-            if label == "burst":
+            if label.strip() == "burst":
                 Y.append(1)
             else:
                 Y.append(0)
+            if counter % 100 == 0:
+                print(dataset_file, ":", counter)
 
     print("Writing result to file...")
     with open(dataset_file+DATASET_FILE, "wb") as f:
@@ -113,4 +116,25 @@ def download_text(post_id):
     return " ".join(text)
 
 
-build_dataset(sys.argv[1])
+X = []
+Y = []
+em = []
+
+
+def merge():
+    for file_name in os.listdir(sys.argv[2]):
+        with open(os.path.join(sys.argv[2], file_name), "rb") as f:
+            x, y, em = pickle.load(f)
+            X += x
+            Y += y
+    print("writing results...")
+    with open("reddit_data.pkl", "wb") as f:
+        pickle.dump([X, Y, em], f)
+
+
+if sys.argv[1] == "merge":
+    merge()
+elif sys.argv[1] == "download":
+    build_dataset(sys.argv[2])
+else:
+    print("Nope.")

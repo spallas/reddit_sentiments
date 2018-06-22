@@ -46,14 +46,15 @@ def load_dataset(data_file):
         X, Y, embed_mat = pickle.load(f)
     X = pad_sequences(X, maxlen=MAX_SENTENCE_LEN, truncating="post")
     Y = np.array(Y)
-    x_train, x_dev, y_train, y_dev = train_test_split(X, Y, random_state=1241251235)
+    x_train, x_dev, y_train, y_dev = train_test_split(X, Y, test_size=0.1, random_state=1241251235)
+    neg_sent_count = sum(Y)
+    print("# neg:", neg_sent_count)
     return x_train, x_dev, y_train, y_dev, embed_mat
 
 # ======== TRAINING ======== #
 
 
 x_train, x_dev, y_train, y_dev, embeddings = load_dataset(sys.argv[1])
-y_dev[0] = 1
 
 input_size = MAX_SENTENCE_LEN
 
@@ -76,15 +77,9 @@ model.compile(loss='binary_crossentropy',
               optimizer='adam',
               metrics=['acc'])
 
-print(x_train.shape)
-print(x_train[0])
-print(x_dev.shape)
-print(y_train.shape)
-print(y_dev.shape)
-
 model.fit(x_train, y_train,
           batch_size=16,
-          epochs=1,
+          epochs=4,
           validation_data=(x_dev, y_dev))
 
 model.save("reddit_model.h5")
@@ -93,6 +88,5 @@ model.save("reddit_model.h5")
 
 y_prob = model.predict(x_dev)
 y_pred = y_prob.argmax(axis=-1)
-y_pred[1] = 1
-plot_heat_matrix(confusion_matrix(y_dev, y_pred), ["burst", "non-burst"])
-print(classification_report(y_dev, y_pred, target_names=["burst", "non-burst"]))
+# plot_heat_matrix(confusion_matrix(y_dev, y_pred), ["non-burst", "burst"])
+print(classification_report(y_dev, y_pred, target_names=["non-burst", "burst"]))
