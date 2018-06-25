@@ -46,7 +46,6 @@ def build_dataset(dataset_file):
             source_id = ids[2:-2].split("', '")[0]
             text = download_text(source_id)
             if text == "error":
-                counter += 1
                 continue
             words_list = list(map(lambda x: word2id.get(x.lower(), 0),
                                   nltk.word_tokenize(text)))
@@ -55,8 +54,6 @@ def build_dataset(dataset_file):
                 Y.append(1)
             else:
                 Y.append(0)
-            if counter % 100 == 0:
-                print(dataset_file, ":", counter)
 
     print("Writing result to file...")
     with open(dataset_file+DATASET_FILE, "wb") as f:
@@ -116,19 +113,17 @@ def download_text(post_id):
     return " ".join(text)
 
 
-X = []
-Y = []
-em = []
-
-
 def merge():
+    X = []
+    Y = []
+    em = []
     for file_name in os.listdir(sys.argv[2]):
         with open(os.path.join(sys.argv[2], file_name), "rb") as f:
             x, y, em = pickle.load(f)
             X += x
             Y += y
     print("writing results...")
-    with open("reddit_data.pkl", "wb") as f:
+    with open(sys.argv[3], "wb") as f:
         pickle.dump([X, Y, em], f)
 
 

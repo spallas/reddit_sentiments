@@ -1,13 +1,12 @@
 import pickle
 import sys
-import numpy as np
-
-import tensorflow as tf
 
 from keras import Model, Input
 from keras.preprocessing.sequence import pad_sequences
-from keras.layers import Dense, Embedding, Dropout, LSTM, Bidirectional, Flatten
+from keras.layers import Dense, Embedding, Dropout, LSTM, Bidirectional, Flatten, Conv1D, MaxPooling1D
+from imblearn.under_sampling import NearMiss
 
+import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sn
 import pandas as pd
@@ -46,7 +45,10 @@ def load_dataset(data_file):
         X, Y, embed_mat = pickle.load(f)
     X = pad_sequences(X, maxlen=MAX_SENTENCE_LEN, truncating="post")
     Y = np.array(Y)
-    x_train, x_dev, y_train, y_dev = train_test_split(X, Y, test_size=0.1, random_state=1241251235)
+    nm1 = NearMiss(random_state=0, version=1)
+    x_resampled, y_resampled = nm1.fit_sample(X, Y)
+    x_train, x_dev, y_train, y_dev = train_test_split(x_resampled, y_resampled,
+                                                      test_size=0.2, random_state=0)
     neg_sent_count = sum(Y)
     print("# neg:", neg_sent_count)
     return x_train, x_dev, y_train, y_dev, embed_mat
@@ -65,21 +67,23 @@ embedding_layer = Embedding(VOCAB_SIZE,
                             trainable=False)
 
 input_layer = Input(shape=(input_size,), dtype='float32')
-embeddings_output = embedding_layer(input_layer)
 
-x = Bidirectional(LSTM(LSTM_SIZE, dropout=0.2, recurrent_dropout=0.2))(embeddings_output)
+x = embedding_layer(input_layer)
+x = Conv1D(128, 5, activation='relu')(x)
+x = MaxPooling1D(5)(x)
+x = Bidirectional(LSTM(LSTM_SIZE, dropout=0.2, recurrent_dropout=0.2))(x)
 
-pred_layer = Dense(1, activation="sigmoid")(x)
+pred_layer = Dense(2, activation="softmax")(x)
 
 model = Model(inputs=input_layer, outputs=pred_layer)
 
-model.compile(loss='binary_crossentropy',
+model.compile(loss='sparse_categorical_crossentropy',
               optimizer='adam',
               metrics=['acc'])
 
 model.fit(x_train, y_train,
-          batch_size=16,
-          epochs=4,
+          batch_size=64,
+          epochs=7,
           validation_data=(x_dev, y_dev))
 
 model.save("reddit_model.h5")
