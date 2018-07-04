@@ -3,13 +3,14 @@ import sys
 
 from keras import Model, Input
 from keras.preprocessing.sequence import pad_sequences
-from keras.layers import Dense, Embedding, Dropout, LSTM, Bidirectional, Flatten, Conv1D, MaxPooling1D
+from keras.layers import Dense, Embedding, LSTM, Bidirectional, Conv1D, MaxPooling1D
 from imblearn.under_sampling import NearMiss
 
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sn
 import pandas as pd
+from sklearn import svm
 from sklearn.metrics import confusion_matrix, classification_report
 from sklearn.model_selection import train_test_split
 
@@ -58,6 +59,13 @@ def load_dataset(data_file):
 
 x_train, x_dev, y_train, y_dev, embeddings = load_dataset(sys.argv[1])
 
+# classifier = svm.LinearSVC()
+# classifier.fit(x_train, y_train)
+# y_pred = classifier.predict(x_dev)
+#
+# print(classification_report(y_dev, y_pred, target_names=["non-burst", "burst"]))
+# sys.exit(0) # gets to .66 F1 score...
+
 input_size = MAX_SENTENCE_LEN
 
 embedding_layer = Embedding(VOCAB_SIZE,
@@ -83,7 +91,7 @@ model.compile(loss='sparse_categorical_crossentropy',
 
 model.fit(x_train, y_train,
           batch_size=64,
-          epochs=7,
+          epochs=5,
           validation_data=(x_dev, y_dev))
 
 model.save("reddit_model.h5")

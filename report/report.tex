@@ -57,15 +57,44 @@ layer gives us the representation of each word before feeding it to the convolut
 Then as we just said the word embeddings are given in input to the convolutional layer. The purpose of this
 layer is to capture more general patterns in the data helping the network to better generalize to new
 examples without excessively specialising on the text of the training data. The result is given in input to
-the LSTM layer which is responsible of learning the patterns in the \emph{sequences} of words, something
-that recurrent network were designed to do well. In particular the LSTM architecture allows to "remember"
-longer sequences learning which parts of the sequences are more important.
-As for the hyper-parameters, after a simple tuning we fixed the following values: ... .
+the bidirectional LSTM layer which is responsible of learning the patterns in the \emph{sequences} of words,
+something that recurrent network were designed to do well. In particular the LSTM architecture allows to
+"remember" longer sequences learning which parts of the sequences are more important. As for the
+hyper-parameters, after a simple tuning we fixed the following values:
+\begin{verbatim}
+- VOCABULARY SIZE: 50000
+- EMBEDDING SIZE: 300
+- MAX SENTENCE LENGHT: 100
+- LSTM HIDDEN STATE SIZE: 128
+- NUMBER OF CONVOLUTIONAL FILTERS: 128
+- CONVOLUTIONAL SLIDING WINDOW SIZE: 5
+- BATCH SIZE: 64
+- NUMBER OF EPOCHS: 4
+- DROPOUT PROBABILITY: 0.2
+\end{verbatim}
 
-\paragraph*{Results and conclusions}
+\paragraph*{Challenges, results and conclusions}
 For each class we calculated precision, recall and f1 score obtaining the following results:
-...
+\begin{verbatim}
+             precision    recall  f1-score   support
 
+  non-burst       0.87      0.93      0.90       769
+      burst       0.93      0.87      0.90       807
 
+  avg/total       0.90      0.90      0.90      1576
+\end{verbatim}
 
+As we mentioned above one of the main challenges was to solve the initial unbalancing of the dataset. We did
+so using an undersampling technique that could have been random but we chose a different solution. We used 
+a method called NearMiss that adds some heuristics to the choice of samples. The mathematical formulation is
+the following: let positive samples be the samples belonging to the targeted class to be under-sampled;
+negative sample refers to the samples from the minority class (i.e., the most under-represented class).
+NearMiss in its version 1 selects the positive samples for which the average distance to the N closest
+samples of the negative class is the smallest.
+
+Of course as always another challenge was the choice of the rights hyperparameters. The performance overall
+is pretty good especially with respect to the results of the original paper (0.80) considering that we
+didn't use much data (about 8000 examples) and that these data where mostly automatically generated.
+As often in deep learning having more data always improves performance especially if we want to add 
+complexity to the network.
 \end{document}
