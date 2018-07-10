@@ -29,7 +29,8 @@ def plot_heat_matrix(c_matrix, classes_strings):
     cm_dataframe = pd.DataFrame(c_matrix, index=classes_strings,
                                 columns=classes_strings)
     plt.subplots(figsize=(10, 10))
-    ax = sn.heatmap(cm_dataframe, cmap=plt.cm.jet, annot=False, square=True)
+    ax = sn.heatmap(cm_dataframe, cmap=plt.cm.jet, annot=True,
+                    fmt="d", square=True)
     # turn the axis label
     for item in ax.get_yticklabels():
         item.set_rotation(0)
@@ -91,7 +92,7 @@ model.compile(loss='sparse_categorical_crossentropy',
 
 model.fit(x_train, y_train,
           batch_size=64,
-          epochs=5,
+          epochs=4,
           validation_data=(x_dev, y_dev))
 
 model.save("reddit_model.h5")
@@ -100,5 +101,5 @@ model.save("reddit_model.h5")
 
 y_prob = model.predict(x_dev)
 y_pred = y_prob.argmax(axis=-1)
-# plot_heat_matrix(confusion_matrix(y_dev, y_pred), ["non-burst", "burst"])
+plot_heat_matrix(confusion_matrix(y_dev, y_pred), ["non-burst", "burst"])
 print(classification_report(y_dev, y_pred, target_names=["non-burst", "burst"]))
